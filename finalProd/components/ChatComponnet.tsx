@@ -1,4 +1,3 @@
-// components/ChatAssistant.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -17,15 +16,12 @@ const ChatAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   
-  // Generate a random user ID for this session
   const [userId] = useState(`user-${Math.random().toString(36).substring(2, 9)}`);
 
-  // Scroll to bottom of chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Add initial greeting when chat is opened
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([
