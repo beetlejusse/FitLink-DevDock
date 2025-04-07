@@ -13,7 +13,7 @@ interface ChatRoomProps {
 
 export function ChatRoom({ room }: ChatRoomProps) {
   const [message, setMessage] = useState('');
-  const { messages, sendMessage, isReady, isLoadingHistory } = useWaku(room.id);
+  const { messages, sendMessage, isReady, isLoadingHistory } = useWaku();
   const { address } = useWalletAuth();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -65,7 +65,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
             <span>Back to Rooms</span>
           </button>
           <h2 className="text-xl font-semibold text-gray-800">{room.name}</h2>
-          <div className="w-24" /> {/* Spacer for alignment */}
+          <div className="w-24" /> 
         </div>
       </div>
 

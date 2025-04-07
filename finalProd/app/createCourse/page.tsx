@@ -44,7 +44,6 @@ export default function CreateProgramPage() {
       const file = e.target.files[0]
       setImageFile(file)
       
-      // Create a preview
       const reader = new FileReader()
       reader.onloadend = () => {
         setImagePreview(reader.result as string)
@@ -98,7 +97,6 @@ export default function CreateProgramPage() {
 
       setSubmitting(true)
 
-      // Upload image if not already uploaded
       let imageUrl = formData.imageUrl
       if (imageFile && !imageUrl) {
         imageUrl = await uploadImageToImgBB(imageFile)

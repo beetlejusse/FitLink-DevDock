@@ -2,7 +2,7 @@ export interface ChatMessage {
   timestamp: number;
   sender: string;
   content: string;
-  roomId: string;
+  // roomId: string;
 }
 
 export interface ChatRoom {
@@ -26,6 +26,6 @@ export interface MessageStore {
 
 export interface RoomEvent {
   type: 'create' | 'update' | 'delete';
-  room: ChatRoom;
   timestamp: number;
+  room: ChatRoom;
 }

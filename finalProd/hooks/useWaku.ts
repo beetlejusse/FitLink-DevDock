@@ -1,58 +1,54 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createLightNode, createDecoder, createEncoder, waitForRemotePeer, Protocols } from '@waku/sdk';
-import { ChatMessage } from '@/types/chat';
+import { ChatMessage } from '../types/chat';
+import { LocalMessageStore } from '../utils/messageStore';
 import protobuf from 'protobufjs';
 
-interface ProtobufChatMessage {
+const ContentTopic = '/waku-chat-app/1/chat/proto';
+
+interface DecodedMessage {
   timestamp: number;
   sender: string;
   content: string;
-  roomId: string;
 }
-
-const getContentTopic = (roomId: string) => `/waku-chat-app/1/chat/${roomId}/proto`;
 
 const messagePrototype = new protobuf.Type('ChatMessage')
   .add(new protobuf.Field('timestamp', 1, 'uint64'))
   .add(new protobuf.Field('sender', 2, 'string'))
-  .add(new protobuf.Field('content', 3, 'string'))
-  .add(new protobuf.Field('roomId', 4, 'string'));
+  .add(new protobuf.Field('content', 3, 'string'));
 
-export function useWaku(roomId: string) {
+export function useWaku() {
   const [node, setNode] = useState<any>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const messageStore = useRef<LocalMessageStore>(new LocalMessageStore(100));
   const retryAttempts = useRef(0);
   const maxRetries = 10;
 
   const fetchStoredMessages = async (wakuNode: any) => {
     try {
       setIsLoadingHistory(true);
-      const decoder = createDecoder(getContentTopic(roomId));
-      const roomMessages: ChatMessage[] = [];
-
+      const decoder = createDecoder(ContentTopic);
       const callback = (wakuMessage: any) => {
         try {
           const payload = wakuMessage.payload;
-          const decodedMessage = messagePrototype.decode(payload) as unknown as ProtobufChatMessage;
+          const decodedMessage = messagePrototype.decode(payload) as unknown as DecodedMessage;
           const chatMessage: ChatMessage = {
             timestamp: Number(decodedMessage.timestamp),
             sender: decodedMessage.sender,
             content: decodedMessage.content,
-            roomId: decodedMessage.roomId,
           };
-          if (chatMessage.roomId === roomId) {
-            roomMessages.push(chatMessage);
-          }
+          messageStore.current.addMessage(chatMessage);
         } catch (error) {
           console.error('Failed to decode stored message:', error);
         }
       };
 
+      // Query the store for historical messages (last 24 hours)
       const startTime = new Date();
       startTime.setHours(startTime.getHours() - 24);
-
+      
       await wakuNode.store.queryWithOrderedCallback([decoder], callback, {
         timeFilter: {
           startTime,
@@ -61,8 +57,7 @@ export function useWaku(roomId: string) {
         pageSize: 100,
       });
 
-      roomMessages.sort((a, b) => a.timestamp - b.timestamp);
-      setMessages(roomMessages);
+      setMessages(messageStore.current.getMessages());
     } catch (error) {
       console.error('Failed to fetch stored messages:', error);
     } finally {
@@ -72,44 +67,50 @@ export function useWaku(roomId: string) {
 
   const initWaku = async () => {
     try {
+      // Load existing messages from storage
+      const storedMessages = messageStore.current.getMessages();
+      setMessages(storedMessages);
+
       const wakuNode = await createLightNode({
-        defaultBootstrap: true,
+        defaultBootstrap: true
       });
 
       await wakuNode.start();
-
+      
+      // Wait for specific protocols with timeout
       try {
         await Promise.race([
           waitForRemotePeer(wakuNode, [
             Protocols.Store,
             Protocols.Filter,
-            Protocols.LightPush,
+            Protocols.LightPush
           ]),
-          new Promise((_, reject) =>
+          new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Peer connection timeout')), 30000)
-          ),
+          )
         ]);
       } catch (error) {
         console.warn('Peer connection warning:', error);
+        // Continue anyway as we might still be able to operate
       }
 
+      // Fetch historical messages
       await fetchStoredMessages(wakuNode);
 
-      const decoder = createDecoder(getContentTopic(roomId));
+      // Subscribe to new messages
+      const decoder = createDecoder(ContentTopic);
       await wakuNode.filter.subscribe([decoder], (message: any) => {
         try {
           const payload = message.payload;
-          const decodedMessage = messagePrototype.decode(payload) as unknown as ProtobufChatMessage;
+          const decodedMessage = messagePrototype.decode(payload) as unknown as DecodedMessage;
           const chatMessage: ChatMessage = {
-            timestamp: Number(decodedMessage?.timestamp),
-            sender: decodedMessage?.sender,
-            content: decodedMessage?.content,
-            roomId: decodedMessage?.roomId,
+            timestamp: Number(decodedMessage.timestamp),
+            sender: decodedMessage.sender,
+            content: decodedMessage.content,
           };
-
-          if (chatMessage.roomId === roomId) {
-            setMessages(prev => [...prev, chatMessage].sort((a, b) => a.timestamp - b.timestamp));
-          }
+          
+          messageStore.current.addMessage(chatMessage);
+          setMessages(messageStore.current.getMessages());
         } catch (error) {
           console.error('Failed to decode message:', error);
         }
@@ -117,14 +118,15 @@ export function useWaku(roomId: string) {
 
       setNode(wakuNode);
       setIsReady(true);
-      retryAttempts.current = 0;
+      retryAttempts.current = 0; // Reset retry counter on successful connection
     } catch (error) {
       console.error('Failed to initialize Waku node:', error);
-
+      
+      // Implement retry logic
       if (retryAttempts.current < maxRetries) {
         retryAttempts.current++;
         console.log(`Retrying connection (attempt ${retryAttempts.current}/${maxRetries})...`);
-        setTimeout(initWaku, 5000);
+        setTimeout(initWaku, 5000); // Retry after 5 seconds
       }
     }
   };
@@ -137,18 +139,17 @@ export function useWaku(roomId: string) {
         node.stop();
       }
     };
-  }, [roomId]);
+  }, []);
 
   const sendMessage = useCallback(async (sender: string, content: string) => {
     if (!node || !isReady) return;
 
     try {
-      const encoder = createEncoder({ contentTopic: getContentTopic(roomId) });
+      const encoder = createEncoder({ contentTopic: ContentTopic });
       const message: ChatMessage = {
         timestamp: Date.now(),
         sender,
         content,
-        roomId,
       };
 
       const protoMessage = messagePrototype.create(message);
@@ -158,13 +159,16 @@ export function useWaku(roomId: string) {
         payload: serializedMessage,
       });
 
-      setMessages(prev => [...prev, message].sort((a, b) => a.timestamp - b.timestamp));
+      // Add the message to local storage immediately
+      messageStore.current.addMessage(message);
+      setMessages(messageStore.current.getMessages());
     } catch (error) {
       console.error('Failed to send message:', error);
     }
-  }, [node, isReady, roomId]);
+  }, [node, isReady]);
 
   const clearHistory = useCallback(() => {
+    messageStore.current.clear();
     setMessages([]);
   }, []);
 

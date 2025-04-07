@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, Info } from 'lucide-react'; // Added Info icon for the warning
+import { ArrowLeft, Loader2, AlertCircle, Info } from 'lucide-react';
 import { ChatRoom } from '@/types/chat';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { motion } from "framer-motion";
 
