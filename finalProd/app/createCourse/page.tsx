@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { contractABI } from "@/lib/contract-abi"
 
-const CONTRACT_ADDRESS = "0x79f54161F4C7eD0A99b87F1be9E0835C18bcf9CF"
+const CONTRACT_ADDRESS = "0x0E5DB44DD0468f2e9262E46FC7B293081081f357"
 // ImgBB API key
 const IMGBB_API_KEY = "9df98e0b413b9e091f82c4adf8b68d5a"
 
@@ -260,7 +260,7 @@ export default function CreateProgramPage() {
                   type="number"
                   step="0.01"
                   min="0.01"
-                  placeholder="0.1"
+                  placeholder="0.01"
                   value={formData.price}
                   onChange={handleChange}
                   required
