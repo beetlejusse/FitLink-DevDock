@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
-import { MessageSquare, Plus } from 'lucide-react';
+import { MessageSquare, Plus, Loader2 } from 'lucide-react';
 import { ChatRoom } from '../types/chat';
 
 interface RoomListProps {
   rooms: ChatRoom[];
+  isLoading?: boolean;
 }
 
-export function RoomList({ rooms }: RoomListProps) {
+export function RoomList({ rooms, isLoading = false }: RoomListProps) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-6">
@@ -21,7 +22,12 @@ export function RoomList({ rooms }: RoomListProps) {
         </Link>
       </div>
       
-      {rooms.length === 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+          <span className="ml-3 text-gray-600">Loading rooms...</span>
+        </div>
+      ) : rooms.length === 0 ? (
         <div className="text-center py-8">
           <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No chat rooms available</p>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouterProvider, Router, Route, RootRoute, Outlet, useParams } from '@tanstack/react-router';
+import { RouterProvider, Router, Route, RootRoute, Outlet } from '@tanstack/react-router';
 import { MessageCircle } from 'lucide-react';
 import { useWalletAuth } from './hooks/useWalletAuth';
 import { useRooms } from './hooks/useRooms';
@@ -40,7 +40,8 @@ declare module '@tanstack/react-router' {
 }
 
 function Root() {
-  const { address, isConnected, connect, disconnect, error, isConnecting } = useWalletAuth();
+  const { address, isConnected, connect, disconnect, error: walletError, isConnecting: isWalletConnecting } = useWalletAuth();
+  const { isReady, error: wakuError, isConnecting: isWakuConnecting, reconnect } = useRooms(isConnected);
 
   if (!isConnected) {
     return (
@@ -52,17 +53,17 @@ function Root() {
           <h1 className="text-2xl font-bold text-center mb-6">
             Decentralized Chat
           </h1>
-          {error && (
+          {walletError && (
             <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg text-sm">
-              {error}
+              {walletError}
             </div>
           )}
           <button
             onClick={connect}
-            disabled={isConnecting}
+            disabled={isWalletConnecting}
             className="w-full flex items-center justify-center space-x-2 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+            <span>{isWalletConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
           </button>
         </div>
       </div>
@@ -79,19 +80,31 @@ function Root() {
 }
 
 function Index() {
-  const { rooms } = useRooms();
-  return <RoomList rooms={rooms} />;
+  const { isConnected } = useWalletAuth();
+  const { rooms, isLoadingRooms } = useRooms(isConnected);
+  return <RoomList rooms={rooms} isLoading={isLoadingRooms} />;
 }
 
 function Create() {
-  const { createRoom } = useRooms();
-  const { address } = useWalletAuth();
-  return <CreateRoom onCreateRoom={createRoom} userAddress={address!} />;
+  const { address, isConnected } = useWalletAuth();
+  const { createRoom, isReady, error, isConnecting, reconnect } = useRooms(isConnected);
+  
+  return (
+    <CreateRoom 
+      onCreateRoom={createRoom} 
+      userAddress={address!}
+      isReady={isReady}
+      error={error}
+      isConnecting={isConnecting}
+      onRetryConnection={reconnect}
+    />
+  );
 }
 
 function Room() {
   const { roomId } = roomRoute.useParams();
-  const { getRoomById } = useRooms();
+  const { isConnected } = useWalletAuth();
+  const { getRoomById } = useRooms(isConnected);
   const room = getRoomById(roomId);
 
   if (!room) {

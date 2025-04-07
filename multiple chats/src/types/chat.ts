@@ -10,6 +10,10 @@ export interface ChatRoom {
   name: string;
   creator: string;
   createdAt: number;
+  code: string;
+  lastActivity: number;
+  participantCount: number;
+  isPublic: boolean;
 }
 
 export interface MessageStore {
@@ -18,4 +22,10 @@ export interface MessageStore {
   addMessage: (message: ChatMessage) => void;
   getMessages: () => ChatMessage[];
   clear: () => void;
+}
+
+export interface RoomEvent {
+  type: 'create' | 'update' | 'delete';
+  room: ChatRoom;
+  timestamp: number;
 }
