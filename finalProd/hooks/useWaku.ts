@@ -3,6 +3,13 @@ import { createLightNode, createDecoder, createEncoder, waitForRemotePeer, Proto
 import { ChatMessage } from '@/types/chat';
 import protobuf from 'protobufjs';
 
+interface ProtobufChatMessage {
+  timestamp: number;
+  sender: string;
+  content: string;
+  roomId: string;
+}
+
 const getContentTopic = (roomId: string) => `/waku-chat-app/1/chat/${roomId}/proto`;
 
 const messagePrototype = new protobuf.Type('ChatMessage')
@@ -28,7 +35,7 @@ export function useWaku(roomId: string) {
       const callback = (wakuMessage: any) => {
         try {
           const payload = wakuMessage.payload;
-          const decodedMessage = messagePrototype.decode(payload);
+          const decodedMessage = messagePrototype.decode(payload) as unknown as ProtobufChatMessage;
           const chatMessage: ChatMessage = {
             timestamp: Number(decodedMessage.timestamp),
             sender: decodedMessage.sender,
@@ -43,10 +50,9 @@ export function useWaku(roomId: string) {
         }
       };
 
-      // Query the store for historical messages (last 24 hours)
       const startTime = new Date();
       startTime.setHours(startTime.getHours() - 24);
-      
+
       await wakuNode.store.queryWithOrderedCallback([decoder], callback, {
         timeFilter: {
           startTime,
@@ -55,7 +61,6 @@ export function useWaku(roomId: string) {
         pageSize: 100,
       });
 
-      // Sort messages by timestamp
       roomMessages.sort((a, b) => a.timestamp - b.timestamp);
       setMessages(roomMessages);
     } catch (error) {
@@ -68,21 +73,21 @@ export function useWaku(roomId: string) {
   const initWaku = async () => {
     try {
       const wakuNode = await createLightNode({
-        defaultBootstrap: true
+        defaultBootstrap: true,
       });
 
       await wakuNode.start();
-      
+
       try {
         await Promise.race([
           waitForRemotePeer(wakuNode, [
             Protocols.Store,
             Protocols.Filter,
-            Protocols.LightPush
+            Protocols.LightPush,
           ]),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Peer connection timeout')), 30000)
-          )
+          ),
         ]);
       } catch (error) {
         console.warn('Peer connection warning:', error);
@@ -94,14 +99,14 @@ export function useWaku(roomId: string) {
       await wakuNode.filter.subscribe([decoder], (message: any) => {
         try {
           const payload = message.payload;
-          const decodedMessage = messagePrototype.decode(payload);
+          const decodedMessage = messagePrototype.decode(payload) as unknown as ProtobufChatMessage;
           const chatMessage: ChatMessage = {
-            timestamp: Number(decodedMessage.timestamp),
-            sender: decodedMessage.sender,
-            content: decodedMessage.content,
-            roomId: decodedMessage.roomId,
+            timestamp: Number(decodedMessage?.timestamp),
+            sender: decodedMessage?.sender,
+            content: decodedMessage?.content,
+            roomId: decodedMessage?.roomId,
           };
-          
+
           if (chatMessage.roomId === roomId) {
             setMessages(prev => [...prev, chatMessage].sort((a, b) => a.timestamp - b.timestamp));
           }
@@ -115,7 +120,7 @@ export function useWaku(roomId: string) {
       retryAttempts.current = 0;
     } catch (error) {
       console.error('Failed to initialize Waku node:', error);
-      
+
       if (retryAttempts.current < maxRetries) {
         retryAttempts.current++;
         console.log(`Retrying connection (attempt ${retryAttempts.current}/${maxRetries})...`);
