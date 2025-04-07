@@ -1,5 +1,4 @@
 "use client";
-
 // import { Link } from '@tanstack/react-router';
 import Link from 'next/link';
 import { MessageSquare, Plus, Loader2 } from 'lucide-react';
@@ -9,16 +8,6 @@ interface RoomListProps {
   rooms: ChatRoom[];
   isLoading?: boolean;
 }
-
-{/* <Button 
-              asChild 
-              className="bg-[#0a7c3e] hover:bg-[#086a34] text-white rounded-full px-6 shadow-md hover:shadow-lg transition-all duration-300"
-            >
-              <Link href="/createRoom">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Create New Room
-              </Link>
-            </Button> */}
 
 export function RoomList({ rooms, isLoading = false }: RoomListProps) {
   return (
