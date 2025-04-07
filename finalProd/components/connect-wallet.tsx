@@ -64,12 +64,12 @@ export default function ConnectWallet() {
   return (
     <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       {account ? (
-        <Button variant="outline" onClick={disconnectWallet} className="flex items-center gap-2">
+        <Button variant="outline" onClick={disconnectWallet} className="flex items-center gap-2 cursor-pointer">
           <div className="h-2 w-2 rounded-full bg-green-500" />
           {formatAddress(account)}
         </Button>
       ) : (
-        <Button onClick={connectWallet} disabled={isConnecting} className="flex items-center gap-2">
+        <Button onClick={connectWallet} disabled={isConnecting} className="flex items-center gap-2 cursor-pointer">
           <Wallet className="h-4 w-4" />
           {isConnecting ? "Connecting..." : "Connect Wallet"}
         </Button>
