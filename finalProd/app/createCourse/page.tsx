@@ -13,9 +13,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { contractABI } from "@/lib/contract-abi"
+import { contractAddress } from "@/lib/utils"
 
-const CONTRACT_ADDRESS = "0x0E5DB44DD0468f2e9262E46FC7B293081081f357"
-// ImgBB API key
+const CONTRACT_ADDRESS = contractAddress
 const IMGBB_API_KEY = "9df98e0b413b9e091f82c4adf8b68d5a"
 
 export default function CreateProgramPage() {

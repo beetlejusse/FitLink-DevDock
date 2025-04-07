@@ -12,8 +12,9 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { contractABI } from "@/lib/contract-abi"
+import { contractAddress } from "@/lib/utils"
 
-const CONTRACT_ADDRESS = "0x0E5DB44DD0468f2e9262E46FC7B293081081f357"
+const CONTRACT_ADDRESS = contractAddress
 
 interface Listing {
   id: number
