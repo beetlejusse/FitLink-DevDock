@@ -48,7 +48,7 @@ export default function LandingPage() {
                 A decentralized fitness platform to track your progress, connect with trainers, and achieve your health goals.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
+                <Button asChild size="lg" className="bg-green-600 cursor-pointer hover:bg-green-700 text-white">
                   <Link href="/dashboard">
                     Start Your Journey
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

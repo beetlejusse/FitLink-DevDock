@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { ethers } from "ethers"
-import { Edit, ExternalLink, ShoppingBag, Code, AlertCircle, Github } from "lucide-react"
+import { Edit, ExternalLink, ShoppingBag, Code, AlertCircle, Github, Dumbbell, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -15,7 +15,7 @@ import { contractABI } from "@/lib/contract-abi"
 
 const CONTRACT_ADDRESS = "0x79f54161F4C7eD0A99b87F1be9E0835C18bcf9CF"
 
-type Listing = {
+interface Listing {
   id: number
   seller: string
   title: string
@@ -24,13 +24,14 @@ type Listing = {
   githubRepoLink?: string
   price: string
   isActive: boolean
+  hasAccess?: boolean
 }
 
 export default function DashboardPage() {
   const [account, setAccount] = useState<string | null>(null)
   const [myListings, setMyListings] = useState<Listing[]>([])
   const [purchasedListings, setPurchasedListings] = useState<Listing[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [contract, setContract] = useState<ethers.Contract | null>(null)
 
@@ -77,7 +78,7 @@ export default function DashboardPage() {
         const listing = await contractInstance.getListingDetails(id)
         const hasAccess = await contractInstance.hasAccess(id, userAddress)
 
-        let githubRepoLink
+        let githubRepoLink: string | undefined
         if (hasAccess) {
           githubRepoLink = await contractInstance.getGithubRepoLink(id)
         }
@@ -112,7 +113,6 @@ export default function DashboardPage() {
     }
   }
 
-
   const toggleListingStatus = async (listingId: number, currentStatus: boolean) => {
     if (!contract) return
 
@@ -145,26 +145,26 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="container px-4 md:px-6 py-8 md:py-12 mx-auto">
-        <div className="max-w-5xl mx-auto">
-          <Skeleton className="h-10 w-1/3 mb-8" />
+      <div className="min-h-screen bg-gradient-to-b from-[#e8f9ef] to-white py-12 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <Skeleton className="h-10 w-1/3 mb-8 bg-[#0a7c3e]/20" />
 
-          <Skeleton className="h-12 w-64 mb-6" />
+          <Skeleton className="h-12 w-64 mb-6 bg-[#0a7c3e]/20" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {[...Array(2)].map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardHeader className="pb-0">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/4" />
+              <Card key={i} className="overflow-hidden border-[#0a7c3e]/20 rounded-xl shadow-sm">
+                <CardHeader className="pb-0 bg-[#f5fbf8]">
+                  <Skeleton className="h-6 w-3/4 mb-2 bg-[#0a7c3e]/20" />
+                  <Skeleton className="h-4 w-1/4 bg-[#0a7c3e]/20" />
                 </CardHeader>
                 <CardContent className="py-4">
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-full mb-2 bg-[#0a7c3e]/20" />
+                  <Skeleton className="h-4 w-5/6 bg-[#0a7c3e]/20" />
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Skeleton className="h-10 w-20" />
-                  <Skeleton className="h-10 w-24" />
+                  <Skeleton className="h-10 w-20 bg-[#0a7c3e]/20" />
+                  <Skeleton className="h-10 w-24 bg-[#0a7c3e]/20" />
                 </CardFooter>
               </Card>
             ))}
@@ -176,15 +176,15 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="container px-4 md:px-6 py-8 md:py-12 mx-auto">
-        <div className="max-w-md mx-auto text-center">
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+      <div className="min-h-screen bg-gradient-to-b from-[#e8f9ef] to-white py-12 px-4">
+        <div className="container mx-auto max-w-md text-center">
+          <Alert variant="destructive" className="mb-6 border-red-300 bg-red-50 rounded-xl">
+            <AlertCircle className="h-5 w-5" />
+            <AlertTitle className="text-lg">Error</AlertTitle>
+            <AlertDescription className="text-base">{error}</AlertDescription>
           </Alert>
 
-          <Button asChild>
+          <Button asChild className="bg-[#0a7c3e] hover:bg-[#086a34] text-white rounded-full px-8 py-6 text-base font-medium">
             <Link href="/">Back to Home</Link>
           </Button>
         </div>
@@ -193,22 +193,28 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container px-4 md:px-6 py-8 md:py-12 mx-auto">
-      <motion.div initial="hidden" animate="visible" variants={fadeIn} className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Manage your listings and view your purchased code.</p>
+    <div className="min-h-screen bg-gradient-to-b from-[#e8f9ef] to-white py-12 px-4">
+      <motion.div initial="hidden" animate="visible" variants={fadeIn} className="container mx-auto max-w-5xl">
+        <div className="mb-10 text-center md:text-left">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 text-[#0a7c3e]">My Fitness Dashboard</h1>
+          <p className="text-[#2d6a4f]">Track your fitness programs and manage your trainer content.</p>
         </div>
 
         <Tabs defaultValue="my-listings" className="mb-8">
-          <TabsList>
-            <TabsTrigger value="my-listings" className="flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              My Listings
+          <TabsList className="bg-[#e8f9ef] p-1 rounded-full border border-[#0a7c3e]/20 mb-6">
+            <TabsTrigger
+              value="my-listings"
+              className="rounded-full data-[state=active]:bg-[#0a7c3e] data-[state=active]:text-white px-6 py-2"
+            >
+              <Dumbbell className="h-4 w-4 mr-2" />
+              My Programs
             </TabsTrigger>
-            <TabsTrigger value="purchased" className="flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" />
-              Purchased Code
+            <TabsTrigger
+              value="purchased"
+              className="rounded-full data-[state=active]:bg-[#0a7c3e] data-[state=active]:text-white px-6 py-2"
+            >
+              <Activity className="h-4 w-4 mr-2" />
+              Purchased Plans
             </TabsTrigger>
           </TabsList>
 
@@ -222,46 +228,71 @@ export default function DashboardPage() {
               >
                 {myListings.map((listing) => (
                   <motion.div key={listing.id} variants={fadeIn} transition={{ duration: 0.5 }}>
-                    <Card className="h-full">
-                      <CardHeader>
-                        <CardTitle className="line-clamp-1">{listing.title}</CardTitle>
+                    <Card className="h-full border-[#0a7c3e]/20 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      <CardHeader className="bg-[#f5fbf8] border-b border-[#0a7c3e]/10">
+                        <CardTitle className="line-clamp-1 text-[#0a7c3e]">{listing.title}</CardTitle>
                         <CardDescription className="flex items-center gap-2">
-                          <Badge variant={listing.isActive ? "default" : "secondary"}>
+                          <Badge
+                            variant={listing.isActive ? "default" : "secondary"}
+                            className={
+                              listing.isActive ? "bg-[#0a7c3e] text-white" : "bg-gray-200 text-gray-700"
+                            }
+                          >
                             {listing.isActive ? "Active" : "Inactive"}
                           </Badge>
-                          <span>{listing.price} ETH</span>
+                          <span className="text-[#2d6a4f] font-medium">{listing.price} ETH</span>
                         </CardDescription>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground line-clamp-2 mb-4">{listing.description}</p>
+                      <CardContent className="pt-4">
+                        <p className="text-[#2d6a4f] line-clamp-2 mb-4">{listing.description}</p>
                         <div className="flex flex-wrap gap-2">
                           {listing.deployedProjectUrl && (
-                            <Button asChild variant="outline" size="sm" className="gap-1">
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 border-[#0a7c3e] text-[#0a7c3e] hover:bg-[#e8f9ef] rounded-full"
+                            >
                               <a href={listing.deployedProjectUrl} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3" />
-                                Demo
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Preview
                               </a>
                             </Button>
                           )}
-                          <Button asChild variant="outline" size="sm" className="gap-1">
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="gap-1 border-[#0a7c3e] text-[#0a7c3e] hover:bg-[#e8f9ef] rounded-full"
+                          >
                             <a href={listing.githubRepoLink} target="_blank" rel="noopener noreferrer">
-                              <Github className="h-3 w-3" />
-                              Repo
+                              <Github className="h-3 w-3 mr-1" />
+                              Materials
                             </a>
                           </Button>
                         </div>
                       </CardContent>
-                      <CardFooter className="flex justify-between">
+                      <CardFooter className="flex justify-between border-t border-[#0a7c3e]/10 bg-white">
                         <Button
                           variant={listing.isActive ? "destructive" : "default"}
                           size="sm"
                           onClick={() => toggleListingStatus(listing.id, listing.isActive)}
+                          className={
+                            listing.isActive
+                              ? "bg-red-500 hover:bg-red-600 text-white rounded-full"
+                              : "bg-[#0a7c3e] hover:bg-[#086a34] text-white rounded-full"
+                          }
                         >
                           {listing.isActive ? "Deactivate" : "Activate"}
                         </Button>
-                        <Button asChild variant="outline" size="sm" className="gap-1">
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="gap-1 border-[#0a7c3e] text-[#0a7c3e] hover:bg-[#e8f9ef] rounded-full"
+                        >
                           <Link href={`/edit-listing/${listing.id}`}>
-                            <Edit className="h-3 w-3" />
+                            <Edit className="h-3 w-3 mr-1" />
                             Edit
                           </Link>
                         </Button>
@@ -271,11 +302,31 @@ export default function DashboardPage() {
                 ))}
               </motion.div>
             ) : (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-semibold mb-2">No Listings Found</h3>
-                <p className="text-muted-foreground mb-6">You haven't created any listings yet.</p>
-                <Button asChild>
-                  <Link href="/create-listing">Create a Listing</Link>
+              <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-[#0a7c3e]/10">
+                <div className="inline-flex rounded-full bg-[#e8f9ef] p-6 mb-4">
+                  <Dumbbell className="h-8 w-8 text-[#0a7c3e]" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-[#0a7c3e]">No Programs Found</h3>
+                <p className="text-[#2d6a4f] mb-6">You haven't created any fitness programs yet.</p>
+                <Button
+                  asChild
+                  className="bg-[#0a7c3e] hover:bg-[#086a34] text-white rounded-full px-6"
+                >
+                  <Link href="/createCourse">Create a Program</Link>
+                </Button>
+              </div>
+            )}
+            {/* Conditionally render Create Program button only if myListings.length <= 1 */}
+            {myListings.length <= 1 && myListings.length > 0 && (
+              <div className="text-center mt-8">
+                <Button
+                  asChild
+                  className="bg-[#0a7c3e] hover:bg-[#086a34] text-white rounded-full px-6 py-2 font-medium"
+                >
+                  <Link href="/createCourse">
+                    <Dumbbell className="h-4 w-4 mr-2" />
+                    Create Another Program
+                  </Link>
                 </Button>
               </div>
             )}
@@ -291,33 +342,50 @@ export default function DashboardPage() {
               >
                 {purchasedListings.map((listing) => (
                   <motion.div key={listing.id} variants={fadeIn} transition={{ duration: 0.5 }}>
-                    <Card className="h-full">
-                      <CardHeader>
-                        <CardTitle className="line-clamp-1">{listing.title}</CardTitle>
-                        <CardDescription>Purchased for {listing.price} ETH</CardDescription>
+                    <Card className="h-full border-[#0a7c3e]/20 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      <CardHeader className="bg-[#f5fbf8] border-b border-[#0a7c3e]/10">
+                        <CardTitle className="line-clamp-1 text-[#0a7c3e]">{listing.title}</CardTitle>
+                        <CardDescription className="text-[#2d6a4f]">
+                          Purchased for {listing.price} ETH
+                        </CardDescription>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground line-clamp-2 mb-4">{listing.description}</p>
+                      <CardContent className="pt-4">
+                        <p className="text-[#2d6a4f] line-clamp-2 mb-4">{listing.description}</p>
                         <div className="flex flex-wrap gap-2">
                           {listing.deployedProjectUrl && (
-                            <Button asChild variant="outline" size="sm" className="gap-1">
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 border-[#0a7c3e] text-[#0a7c3e] hover:bg-[#e8f9ef] rounded-full"
+                            >
                               <a href={listing.deployedProjectUrl} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3" />
-                                Demo
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Preview
                               </a>
                             </Button>
                           )}
-                          <Button asChild variant="outline" size="sm" className="gap-1">
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="gap-1 border-[#0a7c3e] text-[#0a7c3e] hover:bg-[#e8f9ef] rounded-full"
+                          >
                             <a href={listing.githubRepoLink} target="_blank" rel="noopener noreferrer">
-                              <Github className="h-3 w-3" />
-                              Repository
+                              <Github className="h-3 w-3 mr-1" />
+                              Materials
                             </a>
                           </Button>
                         </div>
                       </CardContent>
-                      <CardFooter>
-                        <Button asChild variant="outline" size="sm" className="w-full">
-                          <Link href={`/marketplace/${listing.id}`}>View Details</Link>
+                      <CardFooter className="border-t border-[#0a7c3e]/10 bg-white">
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-[#0a7c3e] text-[#0a7c3e] hover:bg-[#e8f9ef] rounded-full"
+                        >
+                          <Link href={`/purchaseProgram/${listing.id}`}>View Program Details</Link>
                         </Button>
                       </CardFooter>
                     </Card>
@@ -325,11 +393,17 @@ export default function DashboardPage() {
                 ))}
               </motion.div>
             ) : (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-semibold mb-2">No Purchases Found</h3>
-                <p className="text-muted-foreground mb-6">You haven't purchased any code yet.</p>
-                <Button asChild>
-                  <Link href="/marketplace">Browse Marketplace</Link>
+              <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-[#0a7c3e]/10">
+                <div className="inline-flex rounded-full bg-[#e8f9ef] p-6 mb-4">
+                  <Activity className="h-8 w-8 text-[#0a7c3e]" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-[#0a7c3e]">No Purchases Found</h3>
+                <p className="text-[#2d6a4f] mb-6">You haven't purchased any fitness programs yet.</p>
+                <Button
+                  asChild
+                  className="bg-[#0a7c3e] hover:bg-[#086a34] text-white rounded-full px-6"
+                >
+                  <Link href="/purchaseProgram">Browse Fitness Programs</Link>
                 </Button>
               </div>
             )}
@@ -339,4 +413,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
