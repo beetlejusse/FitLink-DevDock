@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { ethers } from "ethers"
-import { Upload, AlertCircle, Dumbbell, Clock, Target, DollarSign } from "lucide-react"
+import { Upload, AlertCircle, Dumbbell, Clock, Target, DollarSign, Image as ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,23 +15,69 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { contractABI } from "@/lib/contract-abi"
 
 const CONTRACT_ADDRESS = "0x79f54161F4C7eD0A99b87F1be9E0835C18bcf9CF"
+// ImgBB API key
+const IMGBB_API_KEY = "9df98e0b413b9e091f82c4adf8b68d5a"
 
 export default function CreateProgramPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    deployedProjectUrl: "",
-    githubRepoLink: "",
+    imageUrl: "",
+    courseLinkUrl: "",
     price: "",
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setImageFile(file)
+      
+      // Create a preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const uploadImageToImgBB = async (file: File) => {
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+      
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+        method: 'POST',
+        body: formData,
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setFormData(prev => ({ ...prev, imageUrl: data.data.url }))
+        return data.data.url
+      } else {
+        throw new Error(data.error?.message || 'Failed to upload image')
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      throw new Error('Failed to upload image. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,8 +86,9 @@ export default function CreateProgramPage() {
 
     if (!formData.title.trim()) return setError("Program title is required")
     if (!formData.description.trim()) return setError("Program description is required")
-    if (!formData.githubRepoLink.trim()) return setError("Program materials link is required")
+    if (!formData.courseLinkUrl.trim()) return setError("Program materials link is required")
     if (!formData.price.trim()) return setError("Program price is required")
+    if (!imageFile && !formData.imageUrl) return setError("Program image is required")
 
     try {
       const priceInEth = Number.parseFloat(formData.price)
@@ -50,6 +97,12 @@ export default function CreateProgramPage() {
       }
 
       setSubmitting(true)
+
+      // Upload image if not already uploaded
+      let imageUrl = formData.imageUrl
+      if (imageFile && !imageUrl) {
+        imageUrl = await uploadImageToImgBB(imageFile)
+      }
 
       const { ethereum } = window as any
       if (!ethereum) {
@@ -67,8 +120,8 @@ export default function CreateProgramPage() {
       const tx = await contract.createListing(
         formData.title,
         formData.description,
-        formData.deployedProjectUrl,
-        formData.githubRepoLink,
+        imageUrl,
+        formData.courseLinkUrl,
         ethers.parseEther(formData.price),
       )
 
@@ -117,7 +170,6 @@ export default function CreateProgramPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
             {success && (
               <Alert className="mb-6 bg-green-50 border-green-200 text-green-800 rounded-xl">
                 <AlertCircle className="h-5 w-5 text-green-500" />
@@ -138,7 +190,7 @@ export default function CreateProgramPage() {
                   value={formData.title}
                   onChange={handleChange}
                   required
-                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl"
+                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl text-black"
                 />
               </div>
 
@@ -152,33 +204,48 @@ export default function CreateProgramPage() {
                   value={formData.description}
                   onChange={handleChange}
                   required
-                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl"
+                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl text-black"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="deployedProjectUrl" className="text-[#0a7c3e] font-semibold">Program Preview URL (Optional)</Label>
+                <Label htmlFor="image" className="text-[#0a7c3e] font-semibold">Program Image</Label>
                 <Input
-                  id="deployedProjectUrl"
-                  name="deployedProjectUrl"
-                  placeholder="https://your-program-preview.com"
-                  value={formData.deployedProjectUrl}
-                  onChange={handleChange}
-                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl"
+                  id="image"
+                  name="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl text-black"
                 />
-                <p className="text-sm text-[#2d6a4f]">Provide a link where users can preview your program.</p>
+                <p className="text-sm text-[#2d6a4f]">Upload an image showcasing your fitness program.</p>
+                {imagePreview && (
+                  <div className="mt-2 relative">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="max-h-48 rounded-xl object-contain border border-[#0a7c3e]/20" 
+                    />
+                  </div>
+                )}
+                {uploadingImage && (
+                  <div className="flex items-center text-sm text-[#2d6a4f]">
+                    <Upload className="h-4 w-4 mr-2 animate-spin" />
+                    Uploading image...
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="githubRepoLink" className="text-[#0a7c3e] font-semibold">Program Materials Link</Label>
+                <Label htmlFor="courseLinkUrl" className="text-[#0a7c3e] font-semibold">Program Materials Link</Label>
                 <Input
-                  id="githubRepoLink"
-                  name="githubRepoLink"
+                  id="courseLinkUrl"
+                  name="courseLinkUrl"
                   placeholder="https://example.com/program-materials"
-                  value={formData.githubRepoLink}
+                  value={formData.courseLinkUrl}
                   onChange={handleChange}
                   required
-                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl"
+                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl text-black"
                 />
                 <p className="text-sm text-[#2d6a4f]">
                   This will only be visible to users who purchase your program.
@@ -197,14 +264,14 @@ export default function CreateProgramPage() {
                   value={formData.price}
                   onChange={handleChange}
                   required
-                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl"
+                  className="border-[#0a7c3e]/20 focus:border-[#0a7c3e] focus:ring-[#0a7c3e] rounded-xl text-black"
                 />
               </div>
 
               <Button 
                 type="submit" 
                 className="w-full bg-[#0a7c3e] hover:bg-[#086a34] text-white rounded-xl py-6 text-lg font-semibold transition-colors duration-300" 
-                disabled={submitting}
+                disabled={submitting || uploadingImage}
               >
                 {submitting ? (
                   <span className="flex items-center justify-center gap-2">

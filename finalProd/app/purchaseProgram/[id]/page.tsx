@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { ethers } from "ethers"
-import { ExternalLink, Github, AlertCircle, Check } from "lucide-react"
+import { ExternalLink, Link as LinkIcon, AlertCircle, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,10 +20,10 @@ type Listing = {
   seller: string
   title: string
   description: string
-  deployedProjectUrl: string
+  imageUrl: string           // Changed from deployedProjectUrl
   price: string
   isActive: boolean
-  githubRepoLink?: string
+  courseLinkUrl?: string     // Changed from githubRepoLink
 }
 
 export default function ListingDetailPage() {
@@ -56,14 +56,18 @@ export default function ListingDetailPage() {
           fetchListing(OpenCode)
           checkIfPurchased(OpenCode, accounts[0])
         } else {
+          // If no ethereum object, use a read-only provider
           const readOnlyProvider = new ethers.JsonRpcProvider("https://ethereum-goerli.publicnode.com")
+
           const OpenCode = new ethers.Contract(address, contractABI, readOnlyProvider)
           setContract(OpenCode)
+
           fetchListing(OpenCode)
         }
       } catch (error) {
         console.error("Error initializing provider:", error)
         setLoading(false)
+        // For demo purposes, show mock data if contract interaction fails
         setMockListing()
       }
     }
@@ -74,31 +78,36 @@ export default function ListingDetailPage() {
   const fetchListing = async (contractInstance: ethers.Contract) => {
     try {
       const listingData = await contractInstance.getListingDetails(params.id)
+
       setListing({
         id: Number(listingData[0]),
         seller: listingData[1],
         title: listingData[2],
         description: listingData[3],
-        deployedProjectUrl: listingData[4],
+        imageUrl: listingData[4],      // Changed from deployedProjectUrl
         price: ethers.formatEther(listingData[5]),
         isActive: listingData[6],
       })
+
       setLoading(false)
     } catch (error) {
       console.error("Error fetching listing:", error)
       setLoading(false)
+      // For demo purposes, show mock data if contract interaction fails
       setMockListing()
     }
   }
 
   const checkIfPurchased = async (contractInstance: ethers.Contract, userAddress: string) => {
     if (!userAddress) return
+
     try {
       const hasAccess = await contractInstance.hasAccess(params.id, userAddress)
       setPurchased(hasAccess)
+
       if (hasAccess) {
-        const githubLink = await contractInstance.getGithubRepoLink(params.id)
-        setListing((prev) => (prev ? { ...prev, githubRepoLink: githubLink } : null))
+        const courseLink = await contractInstance.getCourseLinkUrl(params.id)  // Changed from getGithubRepoLink
+        setListing((prev) => (prev ? { ...prev, courseLinkUrl: courseLink } : null))
       }
     } catch (error) {
       console.error("Error checking purchase status:", error)
@@ -109,39 +118,47 @@ export default function ListingDetailPage() {
     setListing({
       id: Number(params.id),
       seller: "0x1234567890123456789012345678901234567890",
-      title: "E-commerce Platform with Next.js",
-      description: "A complete e-commerce solution built with Next.js, Tailwind CSS, and Stripe integration. This project includes user authentication, product catalog, shopping cart, checkout process with Stripe, order management, and admin dashboard. The codebase is well-structured, fully responsive, and follows best practices for performance and SEO.",
-      deployedProjectUrl: "https://example.com/demo1",
+      title: "Advanced React Patterns",
+      description:
+        "Master advanced React patterns and techniques to build scalable, maintainable applications. This course covers context API, custom hooks, render props, HOCs, and performance optimization strategies.",
+      imageUrl: "https://i.ibb.co/XkKBcqm/react-patterns.jpg",  // Changed from deployedProjectUrl
       price: "0.5",
       isActive: true,
-      githubRepoLink: purchased ? "https://github.com/example/e-commerce-platform" : undefined,
+      courseLinkUrl: purchased ? "https://example.com/courses/advanced-react" : undefined,  // Changed from githubRepoLink
     })
   }
 
   const purchaseCode = async () => {
     if (!contract || !listing) return
+
     try {
       setPurchasing(true)
       setError(null)
+
       const { ethereum } = window as any
       if (!ethereum) {
         setError("Please install MetaMask to make purchases")
         setPurchasing(false)
         return
       }
+
       const accounts = await ethereum.request({ method: "eth_requestAccounts" })
       setAccount(accounts[0])
+
       const tx = await contract.purchaseCode(listing.id, {
         value: ethers.parseEther(listing.price),
       })
+
       await tx.wait()
+
       setPurchased(true)
-      const githubLink = await contract.getGithubRepoLink(listing.id)
-      setListing((prev) => (prev ? { ...prev, githubRepoLink: githubLink } : null))
+      const courseLink = await contract.getCourseLinkUrl(listing.id)  // Changed from getGithubRepoLink
+      setListing((prev) => (prev ? { ...prev, courseLinkUrl: courseLink } : null))
+
       setPurchasing(false)
     } catch (error: any) {
-      console.error("Error purchasing code:", error)
-      setError(error.message || "Error purchasing code. Please try again.")
+      console.error("Error purchasing course:", error)  // Changed from "Error purchasing code"
+      setError(error.message || "Error purchasing course. Please try again.")  // Changed from "Error purchasing code"
       setPurchasing(false)
     }
   }
@@ -157,16 +174,20 @@ export default function ListingDetailPage() {
         <div className="max-w-4xl mx-auto">
           <Skeleton className="h-10 w-3/4 mb-4" />
           <Skeleton className="h-6 w-1/4 mb-8" />
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
+              <Skeleton className="h-48 w-full mb-6" /> {/* Added image skeleton */}
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-4 w-5/6 mb-2" />
               <Skeleton className="h-4 w-4/6 mb-8" />
+
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-4 w-5/6 mb-2" />
               <Skeleton className="h-4 w-4/6 mb-2" />
               <Skeleton className="h-4 w-3/6 mb-8" />
             </div>
+
             <div>
               <Skeleton className="h-40 w-full mb-4" />
               <Skeleton className="h-10 w-full" />
@@ -182,7 +203,7 @@ export default function ListingDetailPage() {
       <div className="container px-4 md:px-6 py-8 md:py-12 mx-auto text-center">
         <h1 className="text-3xl font-bold mb-4">Listing Not Found</h1>
         <p className="text-muted-foreground mb-8">The listing you're looking for doesn't exist or has been removed.</p>
-        <Button onClick={() => router.push("/purchaseProgram")}>Back to Marketplace</Button>
+        <Button onClick={() => router.push("/marketplace")}>Back to Marketplace</Button>
       </div>
     )
   }
@@ -201,12 +222,25 @@ export default function ListingDetailPage() {
             </span>
           </div>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
+            {/* Display course image */}
+            {listing.imageUrl && (
+              <div className="w-full overflow-hidden rounded-lg mb-6">
+                <img 
+                  src={listing.imageUrl} 
+                  alt={listing.title} 
+                  className="w-full object-cover"
+                />
+              </div>
+            )}
+            
             <div className="prose dark:prose-invert max-w-none mb-8">
               <h3>Description</h3>
               <p>{listing.description}</p>
             </div>
+
             {error && (
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
@@ -214,52 +248,48 @@ export default function ListingDetailPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+
             {purchased && (
               <Alert className="mb-6 border-green-500">
                 <Check className="h-4 w-4 text-green-500" />
                 <AlertTitle>Purchase Successful</AlertTitle>
                 <AlertDescription>
-                  You now have access to this code. You can access the GitHub repository below.
+                  You now have access to this course. You can access the course link below.
                 </AlertDescription>
               </Alert>
             )}
-            {purchased && listing.githubRepoLink && (
+
+            {purchased && listing.courseLinkUrl && (
               <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4">GitHub Repository</h3>
+                <h3 className="text-xl font-semibold mb-4">Course Access</h3>
                 <Button asChild variant="outline" className="gap-2">
-                  <a href={listing.githubRepoLink} target="_blank" rel="noopener noreferrer">
-                    <Github className="h-4 w-4" />
-                    View Repository
+                  <a href={listing.courseLinkUrl} target="_blank" rel="noopener noreferrer">
+                    <LinkIcon className="h-4 w-4" />
+                    Access Course
                   </a>
                 </Button>
               </div>
             )}
           </div>
+
           <div>
             <Card>
               <CardContent className="p-6">
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-2">Preview</h3>
-                  <Button asChild variant="outline" className="w-full gap-2">
-                    <a href={listing.deployedProjectUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4" />
-                      View Demo
-                    </a>
-                  </Button>
-                </div>
-                <div className="mb-6">
                   <h3 className="text-lg font-semibold mb-2">Price</h3>
                   <p className="text-2xl font-bold">{listing.price} ETH</p>
                 </div>
+
                 {!purchased ? (
                   <Button className="w-full" onClick={purchaseCode} disabled={purchasing || !account}>
-                    {purchasing ? "Processing..." : "Purchase Code"}
+                    {purchasing ? "Processing..." : "Purchase Course"}
                   </Button>
                 ) : (
                   <Button variant="outline" className="w-full" disabled>
                     Already Purchased
                   </Button>
                 )}
+
                 {!account && (
                   <p className="text-sm text-muted-foreground mt-2 text-center">
                     Connect your wallet to make a purchase

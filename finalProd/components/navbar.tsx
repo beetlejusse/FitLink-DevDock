@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Home, BookOpen, MessageCircle, LayoutDashboard } from "lucide-react"
+import { Menu, X, Home, BookOpen, MessageCircle, LayoutDashboard, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useMobile } from "@/hooks/use-mobile"
 import ConnectWallet from "./connect-wallet"
@@ -31,6 +31,7 @@ export default function Navbar() {
   const navLinks = [
     { href: "/", label: "Home", icon: <Home className="h-4 w-4" /> },
     { href: "/purchaseProgram", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
+    { href: "/createCourse", label: "Create Course", icon: <Plus className="h-4 w-4" /> },
     { href: "/chatWTrainer", label: "Chat", icon: <MessageCircle className="h-4 w-4" /> },
     { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
   ]

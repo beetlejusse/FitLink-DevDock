@@ -23,6 +23,7 @@
     "dotenv": "^16.4.7",
     "ethers": "^6.13.5",
     "framer-motion": "^12.6.3",
+    "ipfs-http-client": "^60.0.1",
     "lucide-react": "^0.483.0",
     "motion": "^12.6.3",
     "next": "15.2.3",

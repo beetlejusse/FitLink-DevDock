@@ -38,12 +38,12 @@ export const contractABI = [
 			},
 			{
 				"internalType": "string",
-				"name": "_deployedProjectUrl",
+				"name": "_imageUrl",
 				"type": "string"
 			},
 			{
 				"internalType": "string",
-				"name": "_githubRepoLink",
+				"name": "_courseLinkUrl",
 				"type": "string"
 			},
 			{
@@ -93,7 +93,7 @@ export const contractABI = [
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "deployedProjectUrl",
+				"name": "imageUrl",
 				"type": "string"
 			}
 		],
@@ -225,7 +225,7 @@ export const contractABI = [
 				"type": "uint256"
 			}
 		],
-		"name": "getGithubRepoLink",
+		"name": "getCourseLinkUrl",
 		"outputs": [
 			{
 				"internalType": "string",
@@ -281,7 +281,7 @@ export const contractABI = [
 			},
 			{
 				"internalType": "string",
-				"name": "deployedProjectUrl",
+				"name": "imageUrl",
 				"type": "string"
 			},
 			{
@@ -367,12 +367,12 @@ export const contractABI = [
 			},
 			{
 				"internalType": "string",
-				"name": "deployedProjectUrl",
+				"name": "imageUrl",
 				"type": "string"
 			},
 			{
 				"internalType": "string",
-				"name": "githubRepoLink",
+				"name": "courseLinkUrl",
 				"type": "string"
 			},
 			{
