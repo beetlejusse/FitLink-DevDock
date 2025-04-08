@@ -1,6 +1,9 @@
 # Decentralized Multi-Room Chat Application
 
-check here
+[checkout multiple chatroom feature here](https://fit-link-multichat.vercel.app)
+
+---
+
 The multi-chat feature was initially a part of the main production website, but due to WAKU protocol private nodes being down, and Vercel not building properly with this feature integrated, we instead had to switch to hosting it as a standalone website. This feature gives you access to create multiple chat rooms, thus allowing trainers and users to talk 1 on 1 with each other, and also have communities where people can share their thoughts and learn over a particular topic.Inconvenience over connecting to the application is regretted.
 
 
