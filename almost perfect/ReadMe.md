@@ -1,6 +1,6 @@
 # Decentralized Multi-Room Chat Application
 
-[checkout multiple chatroom feature here](https://fit-link-multichat.vercel.app)
+[checkout multiple chatroom feature here](https://fitlink-multi-chat.vercel.app/)
 
 ---
 
