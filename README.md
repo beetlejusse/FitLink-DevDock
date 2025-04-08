@@ -1,7 +1,7 @@
 # FitLink - Blockchain Fitness Marketplace
 
 
-[please checkout our multiple chatroom feature here](https://fit-link-multichat.vercel.app)
+[please checkout our multiple chatroom feature here](https://github.com/SOGeKING-NUL/FitLink/tree/main/almost%20perfect)
 
 FitLink is a decentralized marketplace for fitness programs built on blockchain technology. The platform allows fitness professionals to create, sell, and manage their fitness programs while users can purchase access to these programs using cryptocurrency. The interactive chat that is setup in a decentralized manner using thw Waku protocol allows uses as well as professionals to connect with each other.
 
