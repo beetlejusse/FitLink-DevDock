@@ -89,7 +89,7 @@ OR:
 3. Configure your environment variables
 4. Run the development server: `npm run dev`
 
-## Usage
+## Usage:
 
 ### For Trainers
 1. Connect your wallet
